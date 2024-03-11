@@ -1,113 +1,482 @@
+'use client';
 import Image from "next/image";
+import { list } from "postcss";
+import React, { useState } from 'react';
+
+function ChangeButton() {
+  const changeText = () => {
+    document.getElementById("chessWord")!.innerHTML = "CheckMate";
+  };
+  return (<button onClick={changeText}>Change to Checkmate</button>);
+}
+
+interface singlePiece {
+  name: string;
+  moves: number[];
+  url: string;
+}
+function logPiece(name: string, moves: number[]) {
+  console.log(name);
+  let move = 0;
+  for (move of moves) {
+    console.log("we can move to " + (move))
+  }
+}
+
+
+
+
+let pawn: singlePiece = { name: "Pawn", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Chess_plt45.svg/1920px-Chess_plt45.svg.png", moves: [8, 16] };
+let bpawn: singlePiece = { name: "Pawn", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Chess_pdt45.svg/1920px-Chess_pdt45.svg.png", moves: [-8, -16] };
+let king: singlePiece = { name: "King", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Chess_klt45.svg/1920px-Chess_klt45.svg.png", moves: [7, 8, 9, 1, -1, -7 - 8, -9] };
+let bking: singlePiece = { name: "King", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Chess_kdt45.svg/1920px-Chess_kdt45.svg.png", moves: [-8, -7, -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 7, 8] };
+let queen: singlePiece = { name: "Queen", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Chess_qlt45.svg/1920px-Chess_qlt45.svg.png", moves: [7, 8, 9, 1, -1, -7 - 8, -9] };
+let bqueen: singlePiece = { name: "Queen", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Chess_qdt45.svg/1920px-Chess_qdt45.svg.png", moves: [7, 8, 9, 1, -1, -7 - 8, -9] };
+let rook: singlePiece = { name: "Rook", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Chess_rlt45.svg/1920px-Chess_nlt45.svg.png", moves: [8, 16] };
+let brook: singlePiece = { name: "Rook", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Chess_rdt45.svg/1920px-Chess_rdt45.svg.png", moves: [8, 16] };
+let bishop: singlePiece = { name: "Bishop", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Chess_blt45.svg/1920px-Chess_blt45.svg.png", moves: [8, 16] };
+let bbishop: singlePiece = { name: "Bishop", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Chess_bdt45.svg/1920px-Chess_bdt45.svg.png", moves: [8, 16] };
+let knight: singlePiece = { name: "Knight", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Chess_nlt45.svg/1920px-Chess_nlt45.svg.png", moves: [8, 16] };
+let bknight: singlePiece = { name: "Knight", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Chess_ndt45.svg/1920px-Chess_ndt45.svg.png", moves: [8, 16] };
+let empty: singlePiece = { name: "Empty", url: "", moves: [] };
+
+
+function getPieceType(pieceName: string): singlePiece {
+  switch (pieceName) {
+    case ('p'): return pawn;
+    case ('n'): return knight;
+    case ('b'): return bishop;
+    case ('r'): return rook;
+    case ('q'): return queen;
+    case ('k'): return king;
+    case ('P'): return bpawn;
+    case ('N'): return bknight;
+    case ('B'): return bbishop;
+    case ('R'): return brook;
+    case ('Q'): return bqueen;
+    case ('K'): return bking;
+    case (''): return empty;
+  }
+  const x: singlePiece = {
+    name: "",
+    moves: [],
+    url: ""
+  };
+  return x;
+}
+function RenderChessPiece(info: singlePiece) {
+  return <img src={info.url}  ></img >
+}
+interface pieceInfo {
+  id: number,
+  tileColour: string,
+  piece: string,
+  team: string;
+  pieceHtml: React.JSX.Element,
+  isClicked: string,
+  isMoved: boolean;
+}
+
+
+function getWhitePawnMoves(piece: pieceInfo, board: pieceInfo[]) {
+  let availableMoves: number[] = [];
+  for (const move of [8]) {
+    if (piece.id + move < 64 && piece.id + move > -1)
+      if (board[piece.id + move].piece == "") {
+        availableMoves.push(move);
+        if (!piece.isMoved) {
+          for (const move of [16]) {
+            if (piece.id + move < 64 && piece.id + move > -1)
+              if (board[piece.id + move].piece == "") {
+                availableMoves.push(move);
+              }
+          }
+        }
+      }
+  }
+  const downLeft = 7;
+  const downRight = 9;
+  if (piece.id + downLeft < 64 && piece.id + downLeft > -1 && piece.id % 8 != 0)
+    if (board[piece.id + downLeft].piece != "" && board[piece.id + downLeft].team != piece.team) {
+      availableMoves.push(downLeft);
+    }
+  if (piece.id + downRight < 64 && piece.id + downRight > -1 && (piece.id + 1) % 8 != 0)
+    if (board[piece.id + downRight].piece != "" && board[piece.id + downRight].team != piece.team) {
+      availableMoves.push(downRight);
+    }
+
+  return availableMoves;
+}
+function getBlackPawnMoves(piece: pieceInfo, board: pieceInfo[]) {
+  let availableMoves: number[] = [];
+  for (const move of [-8]) {
+    if (piece.id + move < 64 && piece.id + move > -1)
+      if (board[piece.id + move].piece == "") {
+        availableMoves.push(move);
+        if (!piece.isMoved) {
+          for (const move of [-16]) {
+            if (piece.id + move < 64 && piece.id + move > -1)
+              if (board[piece.id + move].piece == "") {
+                availableMoves.push(move);
+              }
+          }
+        }
+      }
+  }
+  const upLeft = -9;
+  const upRight = -7;
+  if (piece.id + upLeft < 64 && piece.id + upLeft > -1 && piece.id % 8 != 0)
+    if (board[piece.id + upLeft].piece != "" && board[piece.id + upLeft].team != piece.team) {
+      availableMoves.push(upLeft);
+    }
+  if (piece.id + upRight < 64 && piece.id + upRight > -1 && (piece.id + 1) % 8 != 0)
+    if (board[piece.id + upRight].piece != "" && board[piece.id + upRight].team != piece.team) {
+      availableMoves.push(upRight);
+    }
+
+  return availableMoves;
+}
+function getBishopMoves(piece: pieceInfo, board: pieceInfo[]) {
+  let availableMoves: number[] = [];
+  for (const move of [9, 18, 27, 36, 45, 54, 63]) {
+    if ((piece.id + move) % 8 == 0)
+      break;
+    if (piece.id + move < 64 && piece.id + move > -1) {
+      if (board[piece.id + move].team != piece.team) {
+        availableMoves.push(move);
+      }
+      if (board[piece.id + move].piece != "") {
+        break;
+      }
+    }
+  }
+  for (const move of [-9, -18, -27, -36, -45, -54, -63]) {
+    if ((piece.id + move + 1) % 8 == 0)
+      break;
+    if (piece.id + move < 64 && piece.id + move > -1) {
+      if (board[piece.id + move].team != piece.team) {
+        availableMoves.push(move);
+      }
+      if (board[piece.id + move].piece != "") {
+        break;
+      }
+    }
+  }
+
+  for (const move of [7, 14, 21, 28, 35, 42, 49, 56, 63]) {
+    if ((piece.id + move + 1) % 8 == 0)
+      break;
+    if (piece.id + move < 64 && piece.id + move > -1) {
+      if (board[piece.id + move].team != piece.team) {
+        availableMoves.push(move);
+      }
+      if (board[piece.id + move].piece != "") {
+        break;
+      }
+    }
+  }
+  for (const move of [-7, -14, -21, -28, -35, -42, -49, -56, -63]) {
+    if ((piece.id + move) % 8 == 0)
+      break;
+    if (piece.id + move < 64 && piece.id + move > -1) {
+      if (board[piece.id + move].team != piece.team) {
+        availableMoves.push(move);
+      }
+      if (board[piece.id + move].piece != "") {
+        break;
+      }
+    }
+  }
+  return availableMoves;
+}
+function getRookMoves(piece: pieceInfo, board: pieceInfo[]) {
+  let availableMoves: number[] = [];
+  for (const move of [1, 2, 3, 4, 5, 6, 7]) {
+    if ((piece.id + move) % 8 == 0)
+      break;
+    if (piece.id + move < 64 && piece.id + move > -1) {
+      if (board[piece.id + move].team != piece.team) {
+        availableMoves.push(move);
+      }
+      if (board[piece.id + move].piece != "") {
+        break;
+      }
+    }
+  }
+  for (const move of [-1, -2, -3, -4, -5, -6, -7]) {
+    if ((piece.id + move + 1) % 8 == 0)
+      break;
+    if (piece.id + move < 64 && piece.id + move > -1) {
+      if (board[piece.id + move].team != piece.team)
+        availableMoves.push(move);
+      if (board[piece.id + move].piece != "") {
+        break;
+      }
+    }
+  }
+
+  for (const move of [8, 16, 24, 32, 40, 48, 56]) {
+    if (piece.id + move < 64 && piece.id + move > -1) {
+      if (board[piece.id + move].team != piece.team)
+        availableMoves.push(move);
+      if (board[piece.id + move].piece != "") {
+        break;
+      }
+    }
+  }
+  for (const move of [-8, -16, -24, -32, -40, -48, -56]) {
+    if (piece.id + move < 64 && piece.id + move > -1) {
+      if (board[piece.id + move].team != piece.team)
+        availableMoves.push(move);
+      if (board[piece.id + move].piece != "") {
+        break;
+      }
+    }
+  }
+  return availableMoves;
+}
+function getKnightMoves(piece: pieceInfo, board: pieceInfo[]) {
+  let availableMoves: number[] = [];
+  for (const move of [-17, 15]) {
+    if (piece.id + move < 64 && piece.id + move > -1 && (piece.id + move + 1) % 8 != 0) {
+      if (board[piece.id + move].team != piece.team)
+        availableMoves.push(move);
+    }
+  }
+  for (const move of [-10, 6]) {
+    if (piece.id + move < 64 && piece.id + move > -1 && (piece.id + move + 1) % 8 != 0 && (piece.id + move + 2) % 8 != 0) {
+      if (board[piece.id + move].team != piece.team)
+        availableMoves.push(move);
+    }
+  }
+  for (const move of [-15, 17]) {
+    if (piece.id + move < 64 && piece.id + move > -1 && (piece.id + move) % 8 != 0) {
+      if (board[piece.id + move].team != piece.team)
+        availableMoves.push(move);
+    }
+  }
+  for (const move of [-6, 10]) {
+    if (piece.id + move < 64 && piece.id + move > -1 && (piece.id + move) % 8 != 0 && (piece.id + move - 1) % 8 != 0) {
+      if (board[piece.id + move].team != piece.team)
+        availableMoves.push(move);
+    }
+  }
+
+  return availableMoves;
+}
+
+function getKingMoves(piece: pieceInfo, board: pieceInfo[]) {
+  let availableMoves: number[] = [];
+  for (const move of [-9, -8, -7, -1, 1, 7, 8, 9]) {
+    if ((piece.id + move) % 8 == 0)
+      break;
+    if (piece.id + move < 64 && piece.id + move > -1) {
+      if (board[piece.id + move].team != piece.team)
+        availableMoves.push(move);
+    }
+  }
+
+  return availableMoves;
+}
+
+function getAvailableMoves(piece: pieceInfo, board: pieceInfo[]): number[] {
+  //get piece type
+  console.log(piece)
+  let availableMoves: number[] = [];
+  if (piece) {
+    if (piece.piece == "p")
+      return getWhitePawnMoves(piece, board);
+    if (piece.piece == "P")
+      return getBlackPawnMoves(piece, board);
+    if (piece.piece == "b" || piece.piece == "B")
+      return getBishopMoves(piece, board);
+    if (piece.piece == "r" || piece.piece == "R")
+      return getRookMoves(piece, board);
+    if (piece.piece == "q" || piece.piece == "Q")
+      return getBishopMoves(piece, board).concat(getRookMoves(piece, board));
+    if (piece.piece == "k" || piece.piece == "K")
+      return getKingMoves(piece, board)
+    if (piece.piece == "n" || piece.piece == "N")
+      return getKnightMoves(piece, board);
+  }
+  return [];
+}
+function pawnPromotion(piece: pieceInfo) {
+  if (piece.piece == "p") {
+    piece.pieceHtml = RenderChessPiece(getPieceType("q"))
+    piece.piece = "q";
+  }
+  if (piece.piece == "P") {
+    piece.pieceHtml = RenderChessPiece(getPieceType("Q"))
+    piece.piece = "Q";
+  }
+}
+function kingCheck(board: pieceInfo[]) {
+
+}
+function RenderChessBoard() {
+
+
+  let isWhite = false;
+  const [whoTurn, setWhoTurn] = useState("white");
+
+  let pieceChar = "";
+
+  let i = 0;
+  let piecePositionsInput: pieceInfo[] = [];
+
+  for (pieceChar of ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r', 'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p']) {
+    piecePositionsInput.push({ id: i, tileColour: isWhite ? "whiteTile" : "blackTile", piece: pieceChar, pieceHtml: RenderChessPiece(getPieceType(pieceChar)), isClicked: "", team: "white" });
+    i += 1
+    if ((i) % 8 != 0)
+      isWhite = !isWhite;
+  }
+  while (i < 48) {
+    piecePositionsInput.push({ id: i, tileColour: isWhite ? "whiteTile" : "blackTile", piece: "", pieceHtml: RenderChessPiece(getPieceType("")), isClicked: "" });
+    i += 1
+    if ((i) % 8 != 0)
+      isWhite = !isWhite;
+  }
+  i = 48
+  for (pieceChar of ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']) {
+    piecePositionsInput.push({ id: i, tileColour: isWhite ? "whiteTile" : "blackTile", piece: pieceChar, pieceHtml: RenderChessPiece(getPieceType(pieceChar)), isClicked: "", team: "black" });
+    i += 1
+    if ((i) % 8 != 0)
+      isWhite = !isWhite;
+  }
+  for (let i = 1; i < 64; i++) {
+    piecePositionsInput.push()
+    if ((i) % 8 != 0) isWhite = !isWhite;
+  }
+  const [piecePositions, setPiecePositions] = useState(piecePositionsInput);
+  const nullPiece: pieceInfo = {
+    id: -1,
+    tileColour: "",
+    piece: "",
+    pieceHtml: undefined,
+    isClicked: ""
+  };
+  const [selectedPiece, setSelectedPiece] = useState(nullPiece);
+
+  const movePiece = (piece: pieceInfo) => {
+    piecePositions.map(p => {
+      if (p.id == piece.id) {
+        p.piece = String(selectedPiece.piece);
+        p.isClicked = "";
+        p.pieceHtml = RenderChessPiece(getPieceType(selectedPiece.piece));
+        p.team = selectedPiece.team;
+        return p;
+      }
+      else {
+        return p;
+      }
+    });
+    piecePositions.map(p => {
+      if (p.id == selectedPiece.id) {
+        p.pieceHtml = RenderChessPiece(getPieceType(""));
+        p.piece = "";
+        p.team = "";
+        return p;
+      }
+      else {
+        return p;
+      }
+    });
+
+    setPiecePositions(piecePositions);
+    if (piece.piece == "p" && piece.id > 55)
+      pawnPromotion(piece);
+    if (piece.piece == "P" && piece.id < 8)
+      pawnPromotion(piece);
+  }
+  const deselectPieces = () => {
+    setPiecePositions(piecePositions.map(p => {
+      if (p.isClicked != "") {
+        p.isClicked = ""
+        return p;
+      } else {
+        return p;
+      }
+    }));
+  }
+  const selectPiece = (id: number) => {
+    let piece: pieceInfo = {
+      id: -1,
+      tileColour: "",
+      piece: "",
+      pieceHtml: undefined,
+      isClicked: ""
+    };
+    setPiecePositions(piecePositions.map(p => {
+      if (p.id === id) {
+        p.isClicked = " clickedTile"
+        piece = p;
+        return p;
+      } else {
+        return p;
+      }
+    }));
+    if (piece.team != whoTurn)
+      return;
+
+    setSelectedPiece(piece);
+
+    let moves = getAvailableMoves(piece, piecePositions);
+    for (const move of moves) {
+      const availableid = piece.id + move;
+      setPiecePositions(
+        piecePositions.map(p => {
+          if (p.id === availableid) {
+            p.isClicked = " availableTile"
+            return p;
+          } else {
+            return p;
+          }
+        }));
+
+    }
+  }
+  const clickPiece = (id: number) => {
+    //check if this is a move. If so, move the piece
+    for (const piece of piecePositions) {
+      if (piece.id == id && piece.isClicked == " availableTile") {
+        movePiece(piece);
+        piece.isMoved = true;
+        deselectPieces();
+        if (whoTurn == "white")
+          setWhoTurn("black")
+        else if (whoTurn == "black")
+          setWhoTurn("white")
+        return;
+      }
+    }
+
+    //delelect
+    deselectPieces();
+    selectPiece(id);
+  }
+
+
+  const listItems = piecePositions.map(piecePosition => <div className={"chessTile " + piecePosition.tileColour + piecePosition.isClicked} onClick={() => clickPiece(piecePosition.id)}> {piecePosition.pieceHtml}</div >);
+
+  return (
+    <div className="App">
+      <div className="grid grid-cols-8 gap-1 chessGrid">
+        {listItems}
+      </div>
+    </div>
+
+  );
+}
+
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+    <div>
+      <h1 id="chessWord">Chess</h1>
+      {ChangeButton()}
+      {RenderChessBoard()}
+    </div>
+  )
 }
+

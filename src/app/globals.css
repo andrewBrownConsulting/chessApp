@@ -18,16 +18,54 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
+  background: linear-gradient(to bottom,
       transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+      rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+.chessTile {
+  width: 100px;
+  height: 100px;
+  display: inline;
+  background-color: rgb(63, 62, 60);
+  border-width: 2px;
+  border-color: black;
+}
+
+.whiteTile {
+  background-color: rgb(216, 188, 188);
+}
+
+.blackTile {
+  background-color: rgb(68, 41, 41);
+}
+
+.clickedTile {
+  background-color: rgb(128, 94, 50);
+}
+
+.availableTile {
+  background-color: rgb(79, 147, 42);
+}
+
+.grid {
+  text-align: center;
+  display: grid;
+}
+
+.chessPiece {
+  display: inline;
+  width: 90%;
+  width: 90%;
+  aspect-ratio: 1;
+}
+
+.chessGrid {
+  width: 850px;
 }
